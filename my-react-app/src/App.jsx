@@ -34,7 +34,8 @@ function CourseSelector({ onSelect }) {
     { id: "bible", label: "Bible / Devotional" },
     { id: "fvg", label: "ICT FVG" },
     { id: "htmlcss", label: "HTML & CSS" },
-    { id: "ob", label: "ICT Order Block" }
+    { id: "ob", label: "ICT Order Block" },
+    { id: "mss", label: "Market Structure Shift" }
   ];
 
   return (
