@@ -173,7 +173,7 @@ function App() {
         setError("");
 
         const res = await axios.get("https://ict-agentofgod.pythonanywhere.com/get_flashcard", {
-          params: { course },          // 👈 backend sees ?course=python (or javascript, etc.)
+          params: { course },          
           signal: controller.signal
         });
         // const res = await axios.get("http://localhost:8000/get_flashcard", {
