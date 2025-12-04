@@ -195,6 +195,16 @@ function Flashcard({ card, index, total, onNext, onPrev }) {
               {view === "explain" && (
                 <p className="flashcard-reasoning">{card.reasoning}</p>
               )}
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(card.question)}ict`}
+                style={{ color: '#ffc107' }} // Bootstrap warning color
+                target="_blank"
+              >
+                Learn more
+              </a>
+              {/* <button className="btn" onClick={()=>{window.open(`https://www.google.com/search?q=${encodeURIComponent(card.question)}`, '_blank');}} type="button">
+                Learn more...
+              </button> */}
 
               {view === "answer" && (
                 <p className="flashcard-hint">
