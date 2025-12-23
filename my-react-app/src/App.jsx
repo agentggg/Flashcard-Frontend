@@ -29,9 +29,12 @@ const fallbackFlashcards = [
 function CourseSelector({ onSelect }) {
   const courses = [
     { id: "bigo", label: "BigO Notation", filterId: "Computer Science" },
+
     { id: "python", label: "Python (Core)", filterId: "Coding" },
     { id: "javascript", label: "JavaScript", filterId: "Coding" },
+
     { id: "html_css", label: "HTML & CSS", filterId: "Frontend Development" },
+
     { id: "ict", label: "Trading ICT Strategies", filterId: "Trading Concept"},
     { id: "fvg", label: "Fair Value Gap", filterId: "Trading Concept" },
     { id: "ob", label: "Order Block", filterId: "Trading Concept" },
@@ -45,7 +48,9 @@ function CourseSelector({ onSelect }) {
     { id: "ICT-Vaccum-Gap", label: "Vacuum Gap", filterId: "Trading Concept" },
     { id: "ICT-Mitigration-Block", label: "Mitigation Block", filterId: "Trading Concept" },
 
-    { id: "ros2", label: "Robotic", filterId: "Computer Vision" },
+    { id: "ros2", label: "ROS2", filterId: "Robotic" },
+    { id: "raspberry_pi_motor_control", label: "Raspberry Pi Motor Control", filterId: "Robotic" },
+
     { id: "ml", label: "Machine Learning", filterId: "Computer Vision" },
     { id: "yolo", label: "YOLO", filterId: "Computer Vision" },
     { id: "opencv", label: "OpenCV", filterId: "Computer Vision" },
@@ -69,13 +74,17 @@ function CourseSelector({ onSelect }) {
   const computerVisionConcept = courses.filter((c) =>
     c.filterId.includes("Computer Vision")
   );
+  const roboticConcept = courses.filter((c) =>
+    c.filterId.includes("Robotic")
+  );
 
   const sections = [
     { title: "Coding", items: codingCourse },
     { title: "Frontend Development", items: frontendDevelopmentCourse },
     { title: "Trading · Concepts", items: ictConcept },
     { title: "Computer Science", items: computerScienceConcept },
-    { title: "Computer Vision", items: computerVisionConcept }
+    { title: "Computer Vision", items: computerVisionConcept },
+    { title: "Robotic", items: roboticConcept }
   ];
 
   const [openSections, setOpenSections] = useState(() =>
@@ -84,6 +93,8 @@ function CourseSelector({ onSelect }) {
       return acc;
     }, {})
   );
+
+  
 
   const toggleSection = (title) => {
     setOpenSections((prev) => ({
