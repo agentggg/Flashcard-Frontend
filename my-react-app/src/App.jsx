@@ -140,9 +140,6 @@ function CourseSelector({ onSelect }) {
                             <span className="course-row-label">
                               {course.label}
                             </span>
-                            <span className="course-row-id">
-                              id: <code>{course.id}</code>
-                            </span>
                           </div>
                         </div>
 
