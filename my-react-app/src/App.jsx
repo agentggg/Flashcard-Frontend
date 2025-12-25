@@ -305,7 +305,8 @@ function App() {
         const res = await axios.get("https://ict-agentofgod.pythonanywhere.com/get_flashcard", {
           params: { course },          
           signal: controller.signal
-        });
+        }); 
+        console.log("🚀 ~ fetchCards ~ res:", res.data)
         // const res = await axios.get("http://localhost:8000/get_flashcard", {
         //   params: { course },          // 👈 backend sees ?course=python (or javascript, etc.)
         //   signal: controller.signal
