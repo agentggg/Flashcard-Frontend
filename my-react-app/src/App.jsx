@@ -196,7 +196,13 @@ function CourseSelector({ onSelect }) {
     { id: "advance_python_coding", label: "Advance Python Coding", filterId: "Practical Coding" },
     { id: "computer_vision_coding", label: "Computer Vision Coding", filterId: "Practical Coding" },
 
-    { id: "python_coding_literacy", label: "Easy Code Literacy", filterId: "Python Code Literacy" },
+    // { id: "python_coding_literacy", label: "Easy Code Literacy", filterId: "Python Code Literacy" },
+    { id: "beginner_python_coding_literacy", label: "Beginner Code Literacy", filterId: "Python Code Literacy" },
+    { id: "advanced_python_coding_literacy", label: "Advanced Code Literacy", filterId: "Python Code Literacy" },
+    { id: "intermediate_yolo_coding_literacy", label: "Advanced Code Literacy", filterId: "YOLO Code Literacy" },
+    { id: "beginner_yolo_coding_literacy", label: "Beginner Code Literacy", filterId: "YOLO Code Literacy" },
+    { id: "beginner_computer_vision_coding_literacy", label: "Beginner Code Literacy", filterId: "Computer Vision Code Literacy" },
+    { id: "beginner_javascript_coding_literacy", label: "Beginner Code Literacy", filterId: "JavaScript Code Literacy" },
 
     
   ];
@@ -211,6 +217,10 @@ const computerScienceConcept = courses.filter((c) => c.filterId === "Computer Sc
 const computerVisionConcept = courses.filter((c) => c.filterId === "Computer Vision");
 const roboticConcept = courses.filter((c) => c.filterId === "Robotic");
 const pythonCodeLiteracy = courses.filter((c) => c.filterId === "Python Code Literacy");
+const yoloCodeLiteracy = courses.filter((c) => c.filterId === "YOLO Code Literacy");
+const computerVisionCodeLiteracy = courses.filter((c) => c.filterId === "Computer Vision Code Literacy");
+const javascriptCodeLiteracy = courses.filter((c) => c.filterId === "JavaScript Code Literacy");
+
 
   const sections = [
     { title: "Coding", items: codingCourse },
@@ -220,7 +230,10 @@ const pythonCodeLiteracy = courses.filter((c) => c.filterId === "Python Code Lit
     { title: "Computer Vision", items: computerVisionConcept },
     { title: "Robotic", items: roboticConcept },
     { title: "Hands On Coding Skills", items: practicalCodingConcept },
-    { title: "Python Code Literacy", items: pythonCodeLiteracy }
+    { title: "Python Code Literacy", items: pythonCodeLiteracy },
+    { title: "YOLO Code Literacy", items: yoloCodeLiteracy },
+    { title: "Computer Vision Code Literacy", items: computerVisionCodeLiteracy },
+    { title: "JavaScript Code Literacy", items: javascriptCodeLiteracy },
   ];
 
   const [openSections, setOpenSections] = useState(() =>
