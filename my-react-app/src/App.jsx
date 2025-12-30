@@ -1,11 +1,11 @@
 // src/App.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import "./App.css";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
+import "./App.css";
 
-// Prism languages (add more as needed)
+// Prism languages
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-typescript";
@@ -15,44 +15,20 @@ import "prismjs/components/prism-css";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-yaml";
 
-function detectLanguage(title, code) {
-  const t = String(title || "").toLowerCase();
-  const c = String(code || "");
-  const cl = c.toLowerCase();
+/**
+ * EXPECTED BACKEND FORMAT:
+ * Flashcards:
+ *   { course, question, answer, reasoning }
+ *
+ * Live-code cards (typing editor):
+ *   { type: "code-regex", course, language, title, prompt, expectations:[{description, pattern, required|optional|forbidden, weight, hint}] }
+ *
+ * If your backend currently only returns flashcards, Live Code will still work using local demo typing cards.
+ */
 
-  // Allow explicit hint in title like: "[lang=js]" or "lang: python"
-  const m1 = t.match(/\[\s*lang\s*=\s*([a-z0-9_+-]+)\s*\]/i);
-  const m2 = t.match(/\blang\s*:\s*([a-z0-9_+-]+)/i);
-  const hinted = (m1?.[1] || m2?.[1] || "").trim();
-  if (hinted) return normalizeLang(hinted);
-
-  // Support fenced code blocks: ```js\n...\n```
-  const fence = c.match(/^```\s*([a-z0-9_+-]+)?\s*\n([\s\S]*?)\n```\s*$/i);
-  if (fence?.[1]) return normalizeLang(fence[1]);
-
-  // Heuristics
-  if (/(^|\n)\s*def\s+\w+\s*\(|(^|\n)\s*class\s+\w+\s*[:(]|\bimport\s+\w+|\bfrom\s+\w+\s+import\b/.test(c)) return "python";
-  if (/(^|\n)\s*(const|let|var)\s+\w+\s*=|\bfunction\s+\w+\s*\(|=>|\bconsole\.log\b|\brequire\(|\bmodule\.exports\b|\bexport\s+default\b/.test(c)) return "javascript";
-  if (/(^|\n)\s*interface\s+\w+|\btype\s+\w+\s*=|:\s*(string|number|boolean)\b/.test(c)) return "typescript";
-  if (/(^|\n)\s*<(!doctype|html|div|span|script|style)\b|<\w+[\s>]/.test(c)) return "markup";
-  if (/\{\s*"[^"]+"\s*:/.test(c) && /\}\s*$/.test(c.trim())) return "json";
-  if (/\b(select|insert|update|delete|from|where|join)\b/.test(cl)) return "sql"; // falls back to plaintext if not loaded
-  if (/(^|\n)\s*(\$\s+)?(ls|cd|mkdir|rm|cp|mv|cat|grep|curl|wget)\b/.test(c)) return "bash";
-  if (/^\s*\w+\s*:\s*.+/m.test(c) && /\n\s*\w+\s*:\s*.+/m.test(c)) return "yaml";
-
-  // Also use course-ish keywords in the title when present
-  if (t.includes("javascript") || t.includes("js")) return "javascript";
-  if (t.includes("typescript") || t.includes("ts")) return "typescript";
-  if (t.includes("html") || t.includes("markup")) return "markup";
-  if (t.includes("css")) return "css";
-  if (t.includes("json")) return "json";
-  if (t.includes("bash") || t.includes("shell") || t.includes("terminal")) return "bash";
-  if (t.includes("yaml") || t.includes("yml")) return "yaml";
-  if (t.includes("python") || t.includes("py")) return "python";
-
-  return "python"; // default
-}
-
+// -------------------------
+// Helpers
+// -------------------------
 function normalizeLang(lang) {
   const l = String(lang || "").toLowerCase();
   if (l === "js") return "javascript";
@@ -64,54 +40,103 @@ function normalizeLang(lang) {
   return l;
 }
 
-function stripFenceIfPresent(code) {
-  const c = String(code || "");
-  const fence = c.match(/^```\s*([a-z0-9_+-]+)?\s*\n([\s\S]*?)\n```\s*$/i);
-  if (!fence) return { lang: null, code: c };
-  return { lang: fence[1] ? normalizeLang(fence[1]) : null, code: fence[2] };
-}
-
-function AutoFitCode({ code, language }) {
-  const highlighted = useMemo(() => {
-    const lang = normalizeLang(language);
-    const grammar = Prism.languages[lang];
-    if (!grammar) return escapeHtml(code);
-    return Prism.highlight(code, grammar, lang);
-  }, [code, language]);
-
-  return (
-    <pre
-      className="code-autofit"
-      style={{
-        whiteSpace: "pre-wrap",     // ✅ wrap lines
-        wordBreak: "break-word",    // ✅ break long tokens
-        overflowX: "hidden",        // ❌ no horizontal scroll
-        fontSize: "12px",           // ✅ mobile-safe
-        lineHeight: "1.45",
-        margin: 0,
-  
-      }}
-    >
-      <code
-        className={`language-${normalizeLang(language)}`}
-        dangerouslySetInnerHTML={{ __html: highlighted }}
-      />
-    </pre>
-  );
-}
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/\\"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function safeTest(pattern, text) {
+  try {
+    return pattern.test(text);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeForChecks(code) {
+  return String(code || "").replace(/\r\n/g, "\n");
+}
+
+function computeGrade(expectations, codeNorm) {
+  const checks = [];
+  let totalPossible = 0;
+  let earned = 0;
+  let forbiddenHits = 0;
+  let requiredMisses = 0;
+
+  for (const rule of expectations) {
+    const weight = typeof rule.weight === "number" ? rule.weight : 1;
+    const matched = safeTest(rule.pattern, codeNorm);
+    const passed = rule.forbidden ? !matched : !!matched;
+
+    const kind = rule.forbidden
+      ? "forbidden"
+      : rule.required
+      ? "required"
+      : rule.optional
+      ? "optional"
+      : "neutral";
+
+    checks.push({ ...rule, weight, matched, passed, kind });
+
+    if (rule.forbidden) {
+      totalPossible += weight;
+      if (!matched) earned += weight;
+      else forbiddenHits += 1;
+    } else if (rule.required) {
+      totalPossible += weight;
+      if (matched) earned += weight;
+      else requiredMisses += 1;
+    } else if (rule.optional) {
+      if (matched) earned += weight * 0.35;
+    }
+  }
+
+  const percent = totalPossible > 0 ? Math.max(0, Math.min(1, earned / totalPossible)) : 0;
+
+  let confidence = percent;
+  if (forbiddenHits) confidence -= Math.min(0.25, forbiddenHits * 0.08);
+  if (requiredMisses) confidence -= Math.min(0.25, requiredMisses * 0.05);
+  confidence = Math.max(0, Math.min(1, confidence));
+
+  const passedAllRequired = requiredMisses === 0;
+
+  const verdict =
+    percent >= 0.92 && forbiddenHits === 0 && passedAllRequired
+      ? "Strong Pass"
+      : percent >= 0.75 && forbiddenHits <= 1
+      ? "Pass"
+      : percent >= 0.55
+      ? "Partial"
+      : "Needs Work";
+
+  return { percent, confidence, verdict, checks, totalPossible, earned };
+}
+
+function pct(x) {
+  return `${Math.round(x * 100)}%`;
+}
+
+function kindLabel(kind) {
+  if (kind === "forbidden") return "Forbidden";
+  if (kind === "required") return "Required";
+  if (kind === "optional") return "Optional";
+  return "Check";
+}
+
+function impactLabel(weight) {
+  const w = typeof weight === "number" ? weight : 1;
+  if (w >= 1.3) return "High";
+  if (w >= 1.15) return "Medium";
+  return "Low";
 }
 
 function renderQuestionWithCode(text) {
   const input = String(text || "");
-
-  // Match ```lang?\n...code...\n``` blocks anywhere in the string
   const fenceRe = /```([a-z0-9_+-]+)?\s*\n([\s\S]*?)\n```/gi;
 
   const nodes = [];
@@ -124,7 +149,6 @@ function renderQuestionWithCode(text) {
     const start = match.index;
     const end = start + full.length;
 
-    // text before the block
     const before = input.slice(lastIndex, start);
     if (before) {
       nodes.push(
@@ -134,12 +158,15 @@ function renderQuestionWithCode(text) {
       );
     }
 
-    const lang = rawLang ? normalizeLang(rawLang) : detectLanguage(before, code);
+    const lang = normalizeLang(rawLang || "python");
+    const grammar = Prism.languages[lang];
+    const highlighted = grammar ? Prism.highlight(code, grammar, lang) : escapeHtml(code);
 
-    // the code block
     nodes.push(
       <div key={`c-${blockIndex}-${start}`} className="codeblock-scroll">
-        <AutoFitCode code={code} language={lang} />
+        <pre className="code-autofit">
+          <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: highlighted }} />
+        </pre>
       </div>
     );
 
@@ -147,7 +174,6 @@ function renderQuestionWithCode(text) {
     blockIndex += 1;
   }
 
-  // trailing text after the last block
   const after = input.slice(lastIndex);
   if (after) {
     nodes.push(
@@ -157,215 +183,108 @@ function renderQuestionWithCode(text) {
     );
   }
 
-  // If no fences at all, keep your original behavior
-  if (!nodes.length) {
-    return <span style={{ whiteSpace: "pre-wrap" }}>{input}</span>;
-  }
-
-  return <>{nodes}</>;
+  return nodes.length ? <>{nodes}</> : <span style={{ whiteSpace: "pre-wrap" }}>{input}</span>;
 }
-// Optional fallback data if backend fails / is empty
-const fallbackFlashcards = [
-    {
-    "course":"python_coding_literacy",
-    "question":"What is this code doing?\n\nnumbers = [1, 2, 3, 4, 5]\nresult = [n * 2 for n in numbers if n > 3]",
-    "answer":"It creates a new list with values greater than 3 doubled.",
-    "reasoning":"The list comprehension filters numbers greater than 3 and applies multiplication by 2 to each remaining element."
-  },
-    {
-    "course":"python_coding_literacy",
-    "question":"What is this code doing?\n\ndef clean(data):\n    return [x for x in data if x is not None]",
-    "answer":"It removes None values from a list.",
-    "reasoning":"The list comprehension iterates over the input data and keeps only elements that are not None."
-  },
-  {
-    question: "What is a closure in JavaScript?",
-    answer: "A closure is a function that remembers its outer variables.",
-    reasoning:
-      "A closure allows a function to access variables from its lexical scope even when it's called outside that scope. It's created whenever a function is defined inside another function and the inner function uses variables from the outer one."
-  },
-  {
-    question: "What does HTTP stand for?",
-    answer: "HyperText Transfer Protocol",
-    reasoning:
-      "HTTP is the foundation of data communication on the web. It defines how messages are formatted and transmitted, and how web servers and browsers should respond to various commands."
-  },
-  {
-    question: "What is React?",
-    answer: "A JavaScript library for building user interfaces.",
-    reasoning:
-      "React helps you build reusable UI components. It uses a virtual DOM and a declarative style so you can describe what the UI should look like for each state, and React handles efficiently updating the view."
-  }
-];
 
-// 🔹 Simple course selector homepage
-function CourseSelector({ onSelect }) {
-  const courses = [
-    { id: "bigo", label: "BigO Notation", filterId: "Computer Science" },
-
-    { id: "python", label: "Python (Core)", filterId: "Coding" },
-    { id: "javascript", label: "JavaScript", filterId: "Coding" },
-
-    { id: "html_css", label: "HTML & CSS", filterId: "Frontend Development" },
-
-    { id: "ict", label: "Trading ICT Strategies", filterId: "Trading Concept"},
-    { id: "fvg", label: "Fair Value Gap", filterId: "Trading Concept" },
-    { id: "ob", label: "Order Block", filterId: "Trading Concept" },
-    { id: "mss", label: "Market Structure Shift", filterId: "Trading Concept" },
-    { id: "PDARRAY", label: "Premium / Discount Array", filterId: "Trading Concept" },
-    { id: "ICT-BB", label: "Breaker Block", filterId: "Trading Concept" },
-    { id: "ICT-InverseFVG", label: "Inverse FVG", filterId: "Trading Concept" },
-    { id: "ICT-Implied-FVG", label: "Implied FVG", filterId: "Trading Concept" },
-    { id: "ICT-BPR", label: "Balanced Price Range", filterId: "Trading Concept" },
-    { id: "ICT-Rejection-Block", label: "Rejection Block", filterId: "Trading Concept" },
-    { id: "ICT-Vaccum-Gap", label: "Vacuum Gap", filterId: "Trading Concept" },
-    { id: "ICT-Mitigration-Block", label: "Mitigation Block", filterId: "Trading Concept" },
-
-    { id: "ros2", label: "ROS2", filterId: "Robotic" },
-    { id: "raspberry_pi_motor_control", label: "Raspberry Pi Motor Control", filterId: "Robotic" },
-
-    { id: "ml", label: "Machine Learning", filterId: "Computer Vision" },
-    { id: "yolo", label: "YOLO", filterId: "Computer Vision" },
-    { id: "opencv", label: "OpenCV", filterId: "Computer Vision" },
-    { id: "computer_vision_core", label: "Computer Vision Core", filterId: "Computer Vision" },
-    
-    { id: "yolo_coding", label: "YOLO Coding", filterId: "Practical Coding" },
-    { id: "ros2_coding", label: "ROS2 Coding", filterId: "Practical Coding" },
-    { id: "advance_python_coding", label: "Advance Python Coding", filterId: "Practical Coding" },
-    { id: "computer_vision_coding", label: "Computer Vision Coding", filterId: "Practical Coding" },
-
-    // { id: "python_coding_literacy", label: "Easy Code Literacy", filterId: "Python Code Literacy" },
-    { id: "beginner_python_coding_literacy", label: "Beginner Code Literacy", filterId: "Python Code Literacy" },
-    { id: "advanced_python_coding_literacy", label: "Advanced Code Literacy", filterId: "Python Code Literacy" },
-    { id: "intermediate_yolo_coding_literacy", label: "Advanced Code Literacy", filterId: "YOLO Code Literacy" },
-    { id: "beginner_yolo_coding_literacy", label: "Beginner Code Literacy", filterId: "YOLO Code Literacy" },
-    { id: "beginner_computer_vision_coding_literacy", label: "Beginner Code Literacy", filterId: "Computer Vision Code Literacy" },
-    { id: "beginner_javascript_coding_literacy", label: "Beginner Code Literacy", filterId: "JavaScript Code Literacy" },
-
-    
-  ];
-
-  // Group them a bit so it feels intentiona
-
-const practicalCodingConcept = courses.filter((c) => c.filterId === "Practical Coding");
-const codingCourse = courses.filter((c) => c.filterId === "Coding");
-const frontendDevelopmentCourse = courses.filter((c) => c.filterId === "Frontend Development");
-const ictConcept = courses.filter((c) => c.filterId === "Trading Concept");
-const computerScienceConcept = courses.filter((c) => c.filterId === "Computer Science");
-const computerVisionConcept = courses.filter((c) => c.filterId === "Computer Vision");
-const roboticConcept = courses.filter((c) => c.filterId === "Robotic");
-const pythonCodeLiteracy = courses.filter((c) => c.filterId === "Python Code Literacy");
-const yoloCodeLiteracy = courses.filter((c) => c.filterId === "YOLO Code Literacy");
-const computerVisionCodeLiteracy = courses.filter((c) => c.filterId === "Computer Vision Code Literacy");
-const javascriptCodeLiteracy = courses.filter((c) => c.filterId === "JavaScript Code Literacy");
-
-
-  const sections = [
-    { title: "Coding", items: codingCourse },
-    { title: "Frontend Development", items: frontendDevelopmentCourse },
-    { title: "Trading · Concepts", items: ictConcept },
-    { title: "Computer Science", items: computerScienceConcept },
-    { title: "Computer Vision", items: computerVisionConcept },
-    { title: "Robotic", items: roboticConcept },
-    { title: "Hands On Coding Skills", items: practicalCodingConcept },
-    { title: "Python Code Literacy", items: pythonCodeLiteracy },
-    { title: "YOLO Code Literacy", items: yoloCodeLiteracy },
-    { title: "Computer Vision Code Literacy", items: computerVisionCodeLiteracy },
-    { title: "JavaScript Code Literacy", items: javascriptCodeLiteracy },
-  ];
-
-  const [openSections, setOpenSections] = useState(() =>
-    sections.reduce((acc, section) => {
-      acc[section.title] = false; // start collapsed
-      return acc;
-    }, {})
-  );
-
-  
-
-  const toggleSection = (title) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  };
+// -------------------------
+// Modal (dynamic course list)
+// -------------------------
+function CoursePickerModal({ open, title, subtitle, courses, onSelect, onClose }) {
+  if (!open) return null;
+  const list = Array.isArray(courses) ? courses : [];
 
   return (
-    <div className="course-selector">
-      <div className="course-selector-header">
-        <p className="course-eyebrow">Pick your lane</p>
-        <h2 className="course-heading">
-          What do you want to <span>drill</span> today?
-        </h2>
-        <p className="course-tagline">
-          Tap a track to load a focused flashcard session. You can always come
-          back and switch lanes.
-        </p>
-      </div>
+    <div className="modal-overlay" role="dialog" aria-modal="true">
+      <div className="modal-card">
+        <div className="modal-head">
+          <div>
+            <div className="modal-title">{title || "Select a course"}</div>
+            {subtitle && <div className="modal-subtitle">{subtitle}</div>}
+          </div>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
 
-      <div className="course-selector-panel">
-        {sections.map((section) => {
-          const isOpen = openSections[section.title];
+        <div className="modal-body">
+          {list.length === 0 ? (
+            <div className="modal-empty">No courses found from backend data.</div>
+          ) : (
+            <div className="modal-grid">
+              {list.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="modal-course"
+                  onClick={() => onSelect(c.id)}
+                >
+                  <div className="modal-course-title">{c.label}</div>
+                  <div className="modal-course-meta">{c.meta}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          return (
-            <section key={section.title} className="course-section">
-              <button
-                type="button"
-                className="course-section-header"
-                onClick={() => toggleSection(section.title)}
-              >
-                <span className="course-section-pill" />
-                <h3>{section.title}</h3>
-                <span className="course-section-chevron">
-                  {isOpen ? "▾" : "▸"}
-                </span>
-              </button>
-
-              {isOpen && (
-                <ul className="course-list">
-                  {section.items.map((course) => (
-                    <li key={course.id}>
-                      <button
-                        type="button"
-                        className="course-row"
-                        onClick={() => onSelect(course.id)}
-                      >
-                        <div className="course-row-left">
-                          <div className="course-row-icon">
-                            {course.id.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="course-row-text">
-                            <span className="course-row-label">
-                              {course.label}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="course-row-cta">
-                          <span>Start</span>
-                          <span className="course-row-arrow">↪</span>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          );
-        })}
+        <div className="modal-foot">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function Flashcard({ card, index, total, onNext, onPrev }) {
-  const [view, setView] = useState("question"); // "question" | "answer" | "explain"
+// -------------------------
+// Live-code card (typing editor)
+// -------------------------
+function LiveCodeCard({ card, index, total, onNext, onPrev }) {
+  const [code, setCode] = useState("");
+  const [report, setReport] = useState(null);
+  const [attempt, setAttempt] = useState(0);
 
-  const isBack = view !== "question";
+  const expectations = Array.isArray(card?.expectations) ? card.expectations : [];
+  const language = normalizeLang(card?.language || "python");
 
-  const handleShowAnswer = () => setView("answer");
-  const handleShowExplain = () => setView("explain");
-  const handleReset = () => setView("question");
+  const highlighted = useMemo(() => {
+    const grammar = Prism.languages[language];
+    if (!grammar) return escapeHtml(code);
+    return Prism.highlight(code || "", grammar, language);
+  }, [code, language]);
+
+  const run = () => {
+    const codeNorm = normalizeForChecks(code);
+    setAttempt((a) => a + 1);
+    setReport(computeGrade(expectations, codeNorm));
+  };
+
+  const canProceed = report?.verdict === "Strong Pass" || report?.verdict === "Pass";
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const insert = "  ";
+      const next = code.slice(0, start) + insert + code.slice(end);
+      setCode(next);
+      requestAnimationFrame(() => {
+        el.selectionStart = el.selectionEnd = start + insert.length;
+      });
+    }
+  };
+
+  const onEditorScroll = (e) => {
+    const ta = e.currentTarget;
+    const surface = ta.parentElement;
+    const pre = surface?.querySelector("pre");
+    if (pre) {
+      pre.scrollTop = ta.scrollTop;
+      pre.scrollLeft = ta.scrollLeft;
+    }
+  };
 
   return (
     <div className="flashcard-wrapper animate-in">
@@ -373,79 +292,191 @@ function Flashcard({ card, index, total, onNext, onPrev }) {
         <span className="chip chip-soft">
           Card {index + 1} of {total}
         </span>
-        {view === "question" && <span className="chip chip-accent">Question</span>}
-        {view === "answer" && <span className="chip chip-accent">Answer</span>}
-        {view === "explain" && <span className="chip chip-accent">Explanation</span>}
+        <span className="chip chip-accent">Live Code</span>
+        {attempt > 0 && <span className="chip chip-soft">Attempt {attempt}</span>}
       </div>
 
-      <div className="flashcard-scene">
-        <div className={`flashcard ${isBack ? "is-flipped" : ""}`}>
-          {/* FRONT: QUESTION */}
-          <div className="flashcard-face flashcard-front">
-            <div className="card-gradient-overlay" />
-            <div className="flashcard-content">
-              <p className="flashcard-label">Tap “Answer” to flip</p>
-              <div className="flashcard-question">
-                {renderQuestionWithCode(card.question)}
-              </div>
-            </div>
-          </div>
+      <div className="flashcard-content" style={{ gap: 12 }}>
+        <p className="flashcard-label">{card?.title || "Code Challenge"}</p>
+        <div style={{ whiteSpace: "pre-wrap", opacity: 0.92 }}>{card?.prompt}</div>
 
-          {/* BACK: ANSWER / EXPLANATION */}
-          <div className="flashcard-face flashcard-back">
-            <div className="card-gradient-overlay card-gradient-overlay-back" />
-            <div className="flashcard-content">
-              <p className="flashcard-label">
-                {view === "answer" ? "Answer" : "Explanation"}
-              </p>
-              <h2 className="flashcard-answer">{card.answer}</h2>
-
-              {view === "explain" && (
-                <p className="flashcard-reasoning">{card.reasoning}</p>
-              )}
-              <a
-                href={`https://www.google.com/search?q=${encodeURIComponent(card.question)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#ffc107' }}
-              >
-                Learn more
-              </a>
-              {/* <button className="btn" onClick={()=>{window.open(`https://www.google.com/search?q=${encodeURIComponent(card.question)}`, '_blank');}} type="button">
-                Learn more...
-              </button> */}
-
-              {view === "answer" && (
-                <p className="flashcard-hint">
-                  Want more context? Tap <strong>Explain</strong>.
-                </p>
-              )}
-            </div>
+        <div className="assess-row">
+          <div className="assess-badges">
+            <span className="assess-badge">Language: {language}</span>
           </div>
         </div>
+
+        <div className="code-editor">
+          <div className="code-editor-toolbar">
+            <div className="code-editor-toolbar-left">
+              <span className="assess-badge">Tip: press TAB to indent</span>
+            </div>
+            <div className="code-editor-toolbar-right">
+              <button className="btn btn-outline" type="button" onClick={() => setCode("")} disabled={!code}>
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="code-editor-surface">
+            <pre className="code-editor-highlight" aria-hidden="true">
+              <code
+                className={`language-${language}`}
+                dangerouslySetInnerHTML={{ __html: highlighted + "\n" }}
+              />
+            </pre>
+
+            <textarea
+              className="code-editor-textarea"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onScroll={onEditorScroll}
+              placeholder="Type your code here…"
+              spellCheck={false}
+              autoCapitalize="off"
+              autoCorrect="off"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn" type="button" onClick={run}>
+            Assess
+          </button>
+          <button className="btn btn-outline" type="button" onClick={() => setReport(null)} disabled={!report}>
+            Clear Report
+          </button>
+        </div>
+
+        {report && (
+          <div className="report-panel">
+            <div className="assess-row" style={{ marginBottom: 10 }}>
+              <div>
+                <strong>{report.verdict}</strong> · Score {pct(report.percent)} · Confidence {pct(report.confidence)}
+              </div>
+              <span className="assess-score-pill">
+                {Math.round(report.earned * 100) / 100} / {Math.round(report.totalPossible * 100) / 100}
+              </span>
+            </div>
+
+            <div className="assess-report">
+              {report.checks.map((c, i) => {
+                const label = kindLabel(c.kind);
+                const impact = impactLabel(c.weight);
+
+                return (
+                  <div
+                    key={i}
+                    className="report-item"
+                    style={{
+                      background: c.passed ? "rgba(80,255,140,.08)" : "rgba(255,80,80,.08)",
+                    }}
+                  >
+                    <div className="assess-row">
+                      <strong>
+                        {c.passed ? "✔" : "✘"} {c.description}
+                      </strong>
+                      <div className="assess-badges">
+                        <span className="assess-badge">{label}</span>
+                        <span className="assess-badge">Impact: {impact}</span>
+                      </div>
+                    </div>
+
+                    {!c.passed && c.hint && (
+                      <div style={{ marginTop: 8, fontSize: 12, opacity: 0.92 }}>
+                        <strong>Hint:</strong> {c.hint}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {!canProceed && (
+              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.9 }}>
+                Pass required checks to unlock Next.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* CONTROLS */}
       <div className="flashcard-controls">
         <button className="btn btn-secondary" onClick={onPrev} type="button">
           ← Previous
         </button>
 
         <div className="flashcard-actions">
-          <button
-            className="btn btn-ghost"
-            onClick={handleReset}
-            disabled={view === "question"}
-            type="button"
-          >
+          <button className="btn btn-outline" onClick={onNext} type="button">
+            Skip →
+          </button>
+          <button className="btn" onClick={onNext} type="button" disabled={!canProceed}>
+            Next (unlocked on pass) →
+          </button>
+        </div>
+
+        <button className="btn btn-secondary" onClick={onNext} type="button">
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------
+// Flashcard card
+// -------------------------
+function Flashcard({ card, index, total, onNext, onPrev }) {
+  const [view, setView] = useState("question"); // question | answer | explain
+  const isBack = view !== "question";
+
+  return (
+    <div className="flashcard-wrapper animate-in">
+      <div className="flashcard-meta">
+        <span className="chip chip-soft">
+          Card {index + 1} of {total}
+        </span>
+        <span className="chip chip-accent">
+          {view === "question" ? "Question" : view === "answer" ? "Answer" : "Explanation"}
+        </span>
+      </div>
+
+      <div className="flashcard-scene">
+        <div className={`flashcard ${isBack ? "is-flipped" : ""}`}>
+          <div className="flashcard-face flashcard-front">
+            <div className="card-gradient-overlay" />
+            <div className="flashcard-content">
+              <p className="flashcard-label">Tap “Answer” to flip</p>
+              <div className="flashcard-question">{renderQuestionWithCode(card?.question)}</div>
+            </div>
+          </div>
+
+          <div className="flashcard-face flashcard-back">
+            <div className="card-gradient-overlay card-gradient-overlay-back" />
+            <div className="flashcard-content">
+              <p className="flashcard-label">{view === "answer" ? "Answer" : "Explanation"}</p>
+              <h2 className="flashcard-answer">{card?.answer}</h2>
+              {view === "explain" && <p className="flashcard-reasoning">{card?.reasoning}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flashcard-controls">
+        <button className="btn btn-secondary" onClick={onPrev} type="button">
+          ← Previous
+        </button>
+
+        <div className="flashcard-actions">
+          <button className="btn btn-ghost" onClick={() => setView("question")} disabled={view === "question"} type="button">
             Reset
           </button>
-
-          <button className="btn" onClick={handleShowAnswer} type="button">
+          <button className="btn" onClick={() => setView("answer")} type="button">
             Answer
           </button>
-
-          <button className="btn btn-outline" onClick={handleShowExplain} type="button">
+          <button className="btn btn-outline" onClick={() => setView("explain")} type="button">
             Explain
           </button>
         </div>
@@ -458,156 +489,265 @@ function Flashcard({ card, index, total, onNext, onPrev }) {
   );
 }
 
+// -------------------------
+// Local demo typing cards (so Live Code works immediately)
+// -------------------------
+const localTypingCards = [
+  {
+    type: "code-regex",
+    course: "javascript_easy",
+    language: "javascript",
+    title: "JS Easy: Write add(a,b)",
+    prompt:
+      "Write JavaScript code that defines a function `add(a, b)` and returns the sum.\n" +
+      "Constraints:\n- Must return the result\n- Must use parameters a and b",
+    expectations: [
+      {
+        description: "Defines add function",
+        pattern: /\bfunction\s+add\s*\(\s*a\s*,\s*b\s*\)\s*\{|\bconst\s+add\s*=\s*\(\s*a\s*,\s*b\s*\)\s*=>/i,
+        required: true,
+        weight: 1.3,
+        hint: "Use `function add(a,b){ ... }` or `const add = (a,b)=>{ ... }`",
+      },
+      {
+        description: "Returns a + b",
+        pattern: /\breturn\s+a\s*\+\s*b\b/i,
+        required: true,
+        weight: 1.3,
+        hint: "Return the sum: `return a + b;`",
+      },
+      {
+        description: "Avoids console-only solution",
+        pattern: /\bconsole\.log\b/i,
+        forbidden: true,
+        weight: 1.1,
+        hint: "Return the value; do not only log it.",
+      },
+    ],
+  },
+];
+
+const FALLBACK_FLASHCARDS = [
+  ...localTypingCards,
+  {
+    course: "javascript_easy",
+    question: "What does this output?\n\n```javascript\nconsole.log(2 + '2');\n```",
+    answer: "“22”",
+    reasoning: "When adding a number to a string, JavaScript coerces to string concatenation.",
+  },
+];
+
 function App() {
-  const [cards, setCards] = useState(fallbackFlashcards);
+  const ENDPOINT = "https://ict-agentofgod.pythonanywhere.com/get_flashcard";
+
+  // allCards = everything from backend (plus local typing demos)
+  const [allCards, setAllCards] = useState(FALLBACK_FLASHCARDS);
+
+  // filtered deck (based on selected course + mode)
+  const [cards, setCards] = useState(FALLBACK_FLASHCARDS);
+
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(false); // start false; show homepage first
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [course, setCourse] = useState(""); // <- selected course
-  const [isLeavingCourse, setIsLeavingCourse] = useState(false); // 🔥 for fade-out
-  // When user picks a course on the homepage
-  const handleSelectCourse = (courseId) => {
-    setCourse(courseId);
-    setCurrent(0);
-    setError("");
-    setIsLeavingCourse(false);  
-  };
 
-  // Fetch cards whenever course changes
+  // selection state
+  const [course, setCourse] = useState("");
+  const [mode, setMode] = useState(""); // "flash" | "live"
+
+  // modal state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState("flash"); // which button opened it
+
+  // Fetch everything once from backend
   useEffect(() => {
-    if (!course) return; // no course selected yet → don't fetch
-
     const controller = new AbortController();
 
-    async function fetchCards() {
+    async function fetchAll() {
       try {
         setLoading(true);
         setError("");
 
-        const res = await axios.get("https://ict-agentofgod.pythonanywhere.com/get_flashcard", {
-          params: { course },          
-          signal: controller.signal
-        }); 
-        // const res = await axios.get("http://localhost:8000/get_flashcard", {
-        //   params: { course },          // 👈 backend sees ?course=python (or javascript, etc.)
-        //   signal: controller.signal
-        // });
-
+        const res = await axios.get(ENDPOINT, { signal: controller.signal });
         const data = res.data;
 
         if (Array.isArray(data) && data.length) {
-          setCards(data);
+          // merge in local typing cards so Live Code is always available
+          const merged = [...localTypingCards, ...data];
+          setAllCards(merged);
         } else {
-          console.warn("No cards returned for course:", course);
-          setCards(fallbackFlashcards);
+          setAllCards(FALLBACK_FLASHCARDS);
         }
-
-        setCurrent(0);
-      } catch (err) {
-        if (!axios.isCancel(err)) {
-          console.error(err);
-          setError("Failed to load flashcards. Using demo deck.");
-          setCards(fallbackFlashcards);
-          setCurrent(0);
-        }
+      } catch (e) {
+        setError("Backend not reachable. Using local demo data.");
+        setAllCards(FALLBACK_FLASHCARDS);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchCards();
+    fetchAll();
     return () => controller.abort();
-  }, [course]);
+  }, []);
 
-  const goNext = () => {
-    setCurrent((prev) =>
-      cards.length ? (prev + 1) % cards.length : 0
-    );
+  // Build course options dynamically FROM BACKEND DATA (not hard-coded)
+  const flashCourseOptions = useMemo(() => {
+    const map = new Map();
+    for (const c of allCards || []) {
+      if (!c?.course) continue;
+      if (c?.type === "code-regex") continue; // flash mode excludes typing cards
+      map.set(c.course, (map.get(c.course) || 0) + 1);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([id, count]) => ({ id, label: id, meta: `${count} cards` }));
+  }, [allCards]);
+
+  const liveCourseOptions = useMemo(() => {
+    const map = new Map();
+    for (const c of allCards || []) {
+      if (!c?.course) continue;
+      if (c?.type !== "code-regex") continue; // live mode ONLY typing cards
+      map.set(c.course, (map.get(c.course) || 0) + 1);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([id, count]) => ({ id, label: id, meta: `${count} challenges` }));
+  }, [allCards]);
+
+  // Apply filter when course/mode changes
+  useEffect(() => {
+    if (!course || !mode) {
+      setCards(allCards);
+      return;
+    }
+
+    const filtered = (allCards || []).filter((c) => {
+      if (c?.course !== course) return false;
+      if (mode === "live") return c?.type === "code-regex";
+      return c?.type !== "code-regex";
+    });
+
+    setCards(filtered.length ? filtered : FALLBACK_FLASHCARDS);
+    setCurrent(0);
+  }, [course, mode, allCards]);
+
+  const openPicker = (m) => {
+    setPickerMode(m === "live" ? "live" : "flash");
+    setPickerOpen(true);
   };
 
-  const goPrev = () => {
-    setCurrent((prev) =>
-      cards.length ? (prev === 0 ? cards.length - 1 : prev - 1) : 0
-    );
+  const startSession = (pickedCourse) => {
+    setCourse(pickedCourse);
+    setMode(pickerMode);
+    setPickerOpen(false);
+    setCurrent(0);
   };
+
+  const goHome = () => {
+    setCourse("");
+    setMode("");
+    setCurrent(0);
+  };
+
+  const goNext = () => setCurrent((p) => (cards.length ? (p + 1) % cards.length : 0));
+  const goPrev = () => setCurrent((p) => (cards.length ? (p === 0 ? cards.length - 1 : p - 1) : 0));
 
   const currentCard = cards[current];
 
   return (
     <div className="app-root">
-      {/* Logo top-right */}
-      <div className="app-logo">
-        <div className="app-logo-mark">T&F</div>
-        <span className="app-logo-text">Tech & FAITH</span>
-      </div>
+      <CoursePickerModal
+        open={pickerOpen}
+        title={pickerMode === "live" ? "Live Code" : "Flashcards"}
+        subtitle={
+          pickerMode === "live"
+            ? "Select a course to open the typing editor challenges."
+            : "Select a course to drill flashcards."
+        }
+        courses={pickerMode === "live" ? liveCourseOptions : flashCourseOptions}
+        onSelect={startSession}
+        onClose={() => setPickerOpen(false)}
+      />
 
-      <div className="app-bg-blur" />
       <div className="app-shell">
         <header className="app-header">
           <h1 className="app-title">Flashcard Lab</h1>
           <p className="app-subtitle">
-            {course
-              ? <>Course: <span>{course}</span>{error && <> · <span style={{ color: "#ff6bcb" }}>{error}</span></>}</>
-              : <>Tech in the hands of the <span>righteous</span> people.</>}
+            {course ? (
+              <>
+                Course: <span>{course}</span> · Mode: <span>{mode === "live" ? "Live Code" : "Flashcards"}</span>
+              </>
+            ) : (
+              <>Pick a mode and course from backend data.</>
+            )}
+            {error && (
+              <>
+                {" "}
+                · <span style={{ color: "#ff6bcb" }}>{error}</span>
+              </>
+            )}
           </p>
         </header>
 
-<main className="app-main">
-  {/* If no course selected yet → show homepage selector */}
-  {!course && <CourseSelector onSelect={handleSelectCourse} />}
+        <main className="app-main">
+          {!course && (
+            <div className="launcher">
+              <div className="launcher-card">
+                <div className="launcher-title">Choose a session</div>
+                <div className="launcher-subtitle">
+                  Live Code gives you a typing editor. Flashcards drills Q/A.
+                </div>
 
-  {/* After course selected → show loading or flashcard deck */}
-  {course && (
-    loading ? (
-      <div className="flashcard-wrapper animate-in">
-        <div className="flashcard-meta">
-          <span className="chip chip-soft">Loading {course}…</span>
-        </div>
-        <div className="flashcard-content">
-          <p className="flashcard-label">Preparing your deck</p>
-          <h2 className="flashcard-question">
-            Fetching flashcards for{" "}
-            <span style={{ color: "#ff6bcb" }}>{course}</span>…
-          </h2>
-        </div>
-      </div>
-    ) : (
-      <div
-        className={`flashcard-page ${
-          isLeavingCourse ? "flashcard-page-exit" : "flashcard-page-enter"
-        }`}
-      >
-        <button
-          type="button"
-          className="btn-home"
-          onClick={() => {
-            // 🔥 trigger exit animation
-            setIsLeavingCourse(true);
+                {loading ? (
+                  <div style={{ marginTop: 12, opacity: 0.9 }}>Loading from backend…</div>
+                ) : (
+                  <div className="launcher-actions">
+                    <button type="button" className="btn" onClick={() => openPicker("flash")}>
+                      Start Flashcards
+                    </button>
+                    <button type="button" className="btn btn-outline" onClick={() => openPicker("live")}>
+                      Live Code
+                    </button>
+                  </div>
+                )}
 
-            // wait for CSS animation to finish, then actually go home
-            setTimeout(() => {
-              setCourse("");
-              setCurrent(0);
-              setError("");
-              setIsLeavingCourse(false);
-            }, 380); // match CSS duration
-          }}
-        >
-          ← Back to Courses
-        </button>
+                {!loading && (
+                  <div style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
+                    Course list is computed from backend response (no hard-coded list).
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-        <Flashcard
-          key={current}
-          card={currentCard}
-          index={current}
-          total={cards.length}
-          onNext={goNext}
-          onPrev={goPrev}
-        />
-      </div>
-    )
-  )}
-</main>
+          {course && (
+            <div className="flashcard-page flashcard-page-enter">
+              <button type="button" className="btn-home" onClick={goHome}>
+                ← Back Home
+              </button>
+
+              {currentCard?.type === "code-regex" ? (
+                <LiveCodeCard
+                  key={current}
+                  card={currentCard}
+                  index={current}
+                  total={cards.length}
+                  onNext={goNext}
+                  onPrev={goPrev}
+                />
+              ) : (
+                <Flashcard
+                  key={current}
+                  card={currentCard}
+                  index={current}
+                  total={cards.length}
+                  onNext={goNext}
+                  onPrev={goPrev}
+                />
+              )}
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

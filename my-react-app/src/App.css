@@ -27,6 +27,12 @@ body,
   margin: 0;
 }
 
+html,
+body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 #root {
   width: 100%;
   height: 100%;
@@ -36,6 +42,8 @@ body,
 }
 
 body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "Inter", sans-serif;
   background: radial-gradient(circle at top, #101737 0, #050816 55%, #02010a 100%);
@@ -46,13 +54,14 @@ body {
 
 .app-root {
   min-height: 100vh;
-  height: 100vh;
+  /* Allow the page to scroll when content exceeds the viewport */
+  height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 16px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .app-shell {
@@ -69,8 +78,99 @@ body {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 0 8px;
+  padding: 0 0 40px;
   z-index: 1;
+}
+
+.launcher {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.launcher-card {
+  width: min(520px, 100%);
+  border-radius: 22px;
+  padding: 14px 14px;
+  background:
+    radial-gradient(circle at top left, rgba(124, 92, 255, 0.10), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(255, 107, 203, 0.10), transparent 60%),
+    rgba(11, 16, 32, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.55);
+  backdrop-filter: blur(16px);
+  margin: 0 auto;
+}
+
+.launcher-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+}
+
+.launcher-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.94);
+}
+
+.launcher-desc {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.launcher-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.launcher-note {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.60);
+  text-align: center;
+}
+
+/* Make the two primary actions look balanced on mobile */
+@media (max-width: 640px) {
+  .launcher {
+    padding: 0 10px;
+  }
+
+  .launcher-card {
+    width: 100%;
+    border-radius: 20px;
+    padding: 14px 12px;
+  }
+
+  .launcher-actions {
+    gap: 8px;
+  }
+
+  /* Two-button row that actually fits on mobile */
+  .launcher-actions .btn {
+    width: calc(50% - 4px);
+    min-width: 0;
+  }
+
+  /* If screen is extremely narrow, stack */
+  @media (max-width: 360px) {
+    .launcher-actions .btn {
+      width: 100%;
+    }
+  }
 }
 
 /* Logo top-right */
@@ -160,6 +260,31 @@ body {
 .app-subtitle span {
   color: var(--accent-strong);
   font-weight: 600;
+}
+
+/* --- Subtitle pill (scoped, mobile-safe) --- */
+.app-subtitle{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(10px);
+  max-width: 100%;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+/* keep the warning readable but not oversized */
+.app-subtitle span[style*="#ff6bcb"]{
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255,107,203,0.14);
+  border: 1px solid rgba(255,107,203,0.28);
+  color: rgba(255,255,255,0.92) !important;
 }
 
 /* Flashcard container */
@@ -802,6 +927,14 @@ body {
   .course-row:hover {
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
   }
+
+  .app-shell{
+    max-width: 560px;
+  }
+
+  .app-header{
+    padding-top: 52px; /* gives the top-right logo breathing room */
+  }
 }
 
 
@@ -913,7 +1046,6 @@ body {
 } 
 /* Ensure code samples never clip on small screens */
 .codeblock-scroll {
-  overflow-x: hidden; /* wrap instead of horizontal scrolling */
   max-width: 100%;
 }
 
@@ -925,4 +1057,381 @@ body {
   font-size: clamp(0.68rem, 1.8vw, 0.92rem);
   line-height: 1.4;
   max-width: 100%;
+}
+
+/* Use this class when you want strict no-wrap + horizontal scroll */
+.codeblock-scroll.nowrap pre,
+.codeblock-scroll.nowrap code {
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* ================================
+   Code Answer Assessment (GUI)
+   ================================ */
+
+/* A contained scroller for long reports so the page stays usable */
+.assess-report {
+  max-height: 420px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 6px;
+}
+
+.assess-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.assess-badges {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.assess-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(15, 23, 42, 0.65);
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+
+.assess-badge-required {
+  border-color: rgba(255, 218, 123, 0.45);
+  background: rgba(255, 218, 123, 0.12);
+  color: rgba(255, 235, 251, 0.95);
+}
+
+.assess-badge-optional {
+  border-color: rgba(61, 217, 255, 0.35);
+  background: rgba(61, 217, 255, 0.10);
+  color: rgba(231, 227, 255, 0.95);
+}
+
+.assess-badge-forbidden {
+  border-color: rgba(255, 107, 203, 0.35);
+  background: rgba(255, 107, 203, 0.10);
+  color: rgba(255, 235, 251, 0.95);
+}
+
+.assess-score-pill {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+}
+
+/* Code Editor with syntax-highlight overlay (textarea on top) */
+.code-editor {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+
+.code-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.code-editor-toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.code-editor-toolbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.code-editor-link {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: #ffda7b;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255, 218, 123, 0.45);
+  padding-bottom: 1px;
+}
+
+.code-editor-link:hover {
+  color: #ffe8b3;
+  border-bottom-color: rgba(255, 232, 179, 0.65);
+}
+
+.code-editor-surface {
+  position: relative;
+  min-height: 280px;
+  max-height: 420px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.code-editor-highlight {
+  margin: 0;
+  padding: 14px 16px;
+  min-height: 280px;
+  white-space: pre;
+  tab-size: 2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.code-editor-textarea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  outline: none;
+  background: transparent;
+
+  /* Hide raw text but keep caret visible */
+  color: transparent;
+  caret-color: #ffffff;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+
+  resize: none;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* A subtle helper text style */
+.assess-help {
+  font-size: 0.84rem;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+/* Keep your existing codeblock wrapping behavior for question display, but DO NOT kill scrolling */
+.codeblock-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+/* -----------------------
+   Modal (Fancy Popup)
+------------------------ */
+.modal-overlay{
+  position:fixed; inset:0;
+  background: rgba(0,0,0,.62);
+  display:flex; align-items:center; justify-content:center;
+  padding: 18px;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+.modal-card{
+  width:min(760px, 96vw);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(12,14,18,.92);
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+.modal-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.modal-title{
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.modal-subtitle{
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .82;
+}
+.modal-close{
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor:pointer;
+}
+.modal-body{
+  padding: 14px 16px;
+}
+.modal-empty{
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  opacity: .88;
+}
+.modal-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.modal-course{
+  text-align:left;
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  cursor:pointer;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.modal-course:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.09);
+  border-color: rgba(255,255,255,.16);
+}
+.modal-course-title{
+  font-weight: 700;
+  font-size: 14px;
+}
+.modal-course-meta{
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .78;
+}
+.modal-foot{
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  display:flex; justify-content:flex-end;
+}
+
+/* -----------------------
+   Code blocks inside flashcards
+------------------------ */
+.codeblock-scroll{
+  margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.35);
+  overflow: hidden;
+}
+.code-autofit{
+  margin: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* -----------------------
+   Live Code editor
+------------------------ */
+.code-editor{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.30);
+  overflow:hidden;
+}
+.code-editor-toolbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+.code-editor-surface{
+  position: relative;
+  min-height: 240px;
+  max-height: 360px;
+  overflow: hidden;
+}
+.code-editor-highlight{
+  position:absolute; inset:0;
+  margin:0;
+  padding: 12px;
+  overflow:auto;
+  pointer-events:none;
+  white-space: pre;
+}
+.code-editor-textarea{
+  position:absolute; inset:0;
+  margin:0;
+  padding: 12px;
+  width:100%;
+  height:100%;
+  border:none;
+  resize:none;
+  background: transparent;
+  color: transparent;              /* hides raw text */
+  caret-color: #ffffff;            /* shows caret */
+  outline:none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow:auto;
+}
+
+/* report styles */
+.report-panel{
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+}
+.assess-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.assess-badges{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+.assess-badge{
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  opacity: .92;
+}
+.assess-score-pill{
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+}
+.assess-report{
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.report-item{
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
 }
