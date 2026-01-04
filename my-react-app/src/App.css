@@ -1,23 +1,10 @@
-/* Make sure everything can center nicely */
+/* ================================
+   RESET & ROOT
+================================ */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-:root {
-  --bg: #050816;
-  --card-bg: #0b1020;
-  --accent: #7c5cff;
-  --accent-soft: rgba(124, 92, 255, 0.18);
-  --accent-strong: #ff6bcb;
-  --text-main: #f9fafb;
-  --text-soft: #a3a7c2;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
-  --radius-lg: 24px;
-  --transition-fast: 0.2s ease-out;
-  --transition-med: 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 html,
@@ -27,1411 +14,486 @@ body,
   margin: 0;
 }
 
-html,
 body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  background: radial-gradient(circle at top, #101737 0%, #050816 60%, #02010a 100%);
+  color: #f9fafb;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-#root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  display: block;
+:root {
+  --maxW: 520px;
+  --pad: 16px;
+  --cardPad: 14px;
+  --radius: 18px;
+
+  --text-dim: #a3a7c2;
+  --border-soft: rgba(255, 255, 255, 0.10);
+  --border-softer: rgba(255, 255, 255, 0.08);
+
+  --card-bg: rgba(11, 16, 32, 0.92);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
-body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Inter", sans-serif;
-  background: radial-gradient(circle at top, #101737 0, #050816 55%, #02010a 100%);
-  color: var(--text-main);
-}
-
-/* App container */
-
+/* ================================
+   APP LAYOUT (CENTER + SAFE AREA)
+================================ */
 .app-root {
   min-height: 100vh;
-  /* Allow the page to scroll when content exceeds the viewport */
-  height: auto;
+  width: 100%;
   display: flex;
-  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
-  position: relative;
-  overflow: visible;
+
+  /* Safe-area padding for iOS notch + better feel on mobile */
+  padding:
+    calc(var(--pad) + env(safe-area-inset-top))
+    calc(var(--pad) + env(safe-area-inset-right))
+    calc(var(--pad) + env(safe-area-inset-bottom))
+    calc(var(--pad) + env(safe-area-inset-left));
 }
 
 .app-shell {
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: var(--maxW);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  gap: 18px;
 }
 
 .app-main {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0 0 40px;
-  z-index: 1;
-}
-
-.launcher {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-  padding: 0 8px;
-}
-
-.launcher-card {
-  width: min(520px, 100%);
-  border-radius: 22px;
-  padding: 14px 14px;
-  background:
-    radial-gradient(circle at top left, rgba(124, 92, 255, 0.10), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(255, 107, 203, 0.10), transparent 60%),
-    rgba(11, 16, 32, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 16px 36px rgba(0,0,0,0.55);
-  backdrop-filter: blur(16px);
-  margin: 0 auto;
-}
-
-.launcher-head {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  text-align: center;
+  gap: 16px;
+
+  /* This makes "home screen" centering possible */
+  flex: 1;
+  min-height: 0;
 }
 
-.launcher-title {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-  color: rgba(255,255,255,0.94);
-}
-
-.launcher-desc {
-  margin: 0;
-  font-size: 0.86rem;
-  line-height: 1.5;
-  color: var(--text-soft);
-}
-
-.launcher-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.launcher-note {
-  margin-top: 10px;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.60);
-  text-align: center;
-}
-
-/* Make the two primary actions look balanced on mobile */
-@media (max-width: 640px) {
-  .launcher {
-    padding: 0 10px;
-  }
-
-  .launcher-card {
-    width: 100%;
-    border-radius: 20px;
-    padding: 14px 12px;
-  }
-
-  .launcher-actions {
-    gap: 8px;
-  }
-
-  /* Two-button row that actually fits on mobile */
-  .launcher-actions .btn {
-    width: calc(50% - 4px);
-    min-width: 0;
-  }
-
-  /* If screen is extremely narrow, stack */
-  @media (max-width: 360px) {
-    .launcher-actions .btn {
-      width: 100%;
-    }
-  }
-}
-
-/* Logo top-right */
-
-.app-logo {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-  z-index: 10;
-}
-
-.app-logo-mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: conic-gradient(
-    from 210deg,
-    #ff6bcb,
-    #7c5cff,
-    #3dd9ff,
-    #ffda7b,
-    #ff6bcb
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #050816;
-}
-
-.app-logo-text {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--text-soft);
-}
-
-/* Background glow */
-
-.app-bg-blur {
-  position: absolute;
-  width: 420px;
-  height: 420px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(124, 92, 255, 0.5), transparent 70%);
-  top: -120px;
-  right: -80px;
-  filter: blur(4px);
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-/* Header */
-
+/* ================================
+   HEADER
+================================ */
 .app-header {
   text-align: center;
-  z-index: 1;
-  padding: 0 8px;
+  padding-top: 8px;
 }
 
 .app-title {
-  font-size: clamp(2rem, 3vw, 2.6rem);
-  letter-spacing: 0.07em;
+  margin: 0;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin: 0 0 8px;
-  background: linear-gradient(120deg, #ffffff, #d1c9ff, #ffebfb);
+  font-weight: 900;
+
+  font-size: clamp(1.15rem, 3.2vw, 1.7rem);
+  line-height: 1.1;
+
+  background: linear-gradient(120deg, #ffffff, #c9c2ff, #ffebfb);
   -webkit-background-clip: text;
   color: transparent;
 }
 
 .app-subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-}
-
-.app-subtitle span {
-  color: var(--accent-strong);
-  font-weight: 600;
-}
-
-/* --- Subtitle pill (scoped, mobile-safe) --- */
-.app-subtitle{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18);
-  backdrop-filter: blur(10px);
-  max-width: 100%;
-  flex-wrap: wrap;
-  text-align: center;
-}
-
-/* keep the warning readable but not oversized */
-.app-subtitle span[style*="#ff6bcb"]{
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255,107,203,0.14);
-  border: 1px solid rgba(255,107,203,0.28);
-  color: rgba(255,255,255,0.92) !important;
-}
-
-/* Flashcard container */
-
-.flashcard-wrapper {
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 24px 20px 20px;
-  border-radius: 28px;
-  background: radial-gradient(circle at top left, rgba(124, 92, 255, 0.09), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(255, 107, 203, 0.08), transparent 60%),
-    rgba(11, 16, 32, 0.96);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Entry animation (visible when card changes) */
-
-@keyframes cardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.animate-in {
-  animation: cardEnter 0.45s ease-out;
-}
-
-/* Chips / meta info */
-
-.flashcard-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 12px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-}
-
-.chip-soft {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: var(--border-subtle);
-  color: var(--text-soft);
-}
-
-.chip-accent {
-  background: var(--accent-soft);
-  border-color: rgba(124, 92, 255, 0.7);
-  color: #e7e3ff;
-}
-
-/* 3D Scene */
-
-.flashcard-scene {
-  perspective: 1400px;
-  width: 100%;
-  margin-bottom: 18px;
-}
-
-.flashcard {
-  position: relative;
-  width: 100%;
-  min-height: 240px;
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
-              box-shadow 0.3s ease-out;
-  cursor: pointer;
-}
-
-/* gentle float on hover (desktop) */
-@keyframes cardFloatStrong {
-  0%   { transform: translateY(0) rotateY(0); }
-  50%  { transform: translateY(-4px) rotateY(0.6deg); }
-  100% { transform: translateY(0) rotateY(0); }
-}
-
-.flashcard:hover:not(.is-flipped) {
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.9);
-  animation: cardFloatStrong 3s ease-in-out infinite;
-}
-
-.flashcard.is-flipped {
-  transform: rotateY(180deg) scale(1.03);
-}
-
-/* Card faces */
-
-.flashcard-face {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  backface-visibility: hidden;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  background: radial-gradient(circle at top, #161b3a 0, #070b18 55%, #050815 100%);
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-}
-
-.flashcard-front {
-  z-index: 2;
-}
-
-.flashcard-back {
-  transform: rotateY(180deg);
-}
-
-/* Gradient overlays */
-
-.card-gradient-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top left, rgba(124, 92, 255, 0.18), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(255, 107, 203, 0.16), transparent 65%);
-  mix-blend-mode: screen;
-  pointer-events: none;
-  opacity: 0.9;
-}
-
-.card-gradient-overlay-back {
-  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.2), transparent 60%);
-}
-
-/* Card content */
-
-.flashcard-content {
-  position: relative;
-  padding: 24px 20px 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.flashcard-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-soft);
-  margin-bottom: 10px;
-  opacity: 0.9;
-}
-
-.flashcard-question,
-.flashcard-answer {
-  margin: 0 0 12px;
-  font-size: clamp(1.15rem, 1.5vw + 1rem, 1.6rem);
+  margin: 10px auto 0;
+  max-width: 46ch;
+  font-size: clamp(0.82rem, 2.4vw, 0.95rem);
   line-height: 1.35;
-}
-
-.flashcard-question {
-  font-weight: 650;
-}
-
-.flashcard-answer {
-  font-weight: 650;
-  color: #f3f4ff;
-}
-
-.flashcard-reasoning {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-soft);
-  margin: 6px 0 0;
-}
-
-.flashcard-hint {
-  margin-top: 10px;
-  font-size: 0.84rem;
-  color: var(--text-soft);
-  opacity: 0.95;
-}
-
-/* Controls */
-
-.flashcard-controls {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.flashcard-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* Buttons */
-
-.btn {
-  border-radius: 999px;
-  padding: 9px 18px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: none;
-  background: linear-gradient(135deg, var(--accent), #a77bff);
-  color: #050816;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  position: relative;
-  overflow: hidden;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
-    background 0.2s ease-out, opacity 0.2s ease-out;
-  box-shadow: 0 10px 24px rgba(124, 92, 255, 0.4);
-  white-space: nowrap;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(124, 92, 255, 0.55);
-}
-
-.btn:active {
-  transform: translateY(0);
-  box-shadow: 0 6px 16px rgba(124, 92, 255, 0.4);
-}
-
-.btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 10% -10%, rgba(255, 255, 255, 0.25), transparent 55%);
-  opacity: 0;
-  transition: opacity 0.22s ease-out;
-}
-
-.btn:hover::after {
-  opacity: 1;
-}
-
-.btn-secondary {
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text-main);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.8);
-  border: 1px solid var(--border-subtle);
-}
-
-.btn-secondary:hover {
-  background: rgba(24, 33, 63, 0.95);
-}
-
-.btn-outline {
-  background: transparent;
-  color: #e7e3ff;
-  border: 1px solid rgba(231, 227, 255, 0.55);
-  box-shadow: none;
-}
-
-.btn-outline:hover {
-  background: rgba(231, 227, 255, 0.08);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.4);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text-soft);
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  box-shadow: none;
-}
-
-.btn-ghost:hover {
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text-main);
-}
-
-.btn:disabled,
-.btn[disabled] {
-  opacity: 0.4;
-  cursor: default;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Back-to-home button & deck wrapper */
-
-.flashcard-page {
-  width: 100%;
-  max-width: 720px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-
-.btn-home {
-  align-self: flex-start;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-main);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.6);
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.25s ease;
-}
-
-.btn-home:hover {
-  transform: translateY(-1px);
-  background: rgba(24, 33, 63, 0.92);
-  box-shadow: 0 16px 40px rgba(124, 92, 255, 0.35);
-}
-
-.btn-home:active {
-  transform: translateY(0);
-  box-shadow: 0 8px 20px rgba(124, 92, 255, 0.2);
-}
-
-/* Animations for enter / exit */
-
-@keyframes flashcardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes flashcardFadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(12px) scale(0.96);
-  }
-}
-
-.flashcard-page-enter {
-  animation: flashcardFadeIn 0.38s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
-
-.flashcard-page-exit {
-  animation: flashcardFadeOut 0.38s ease forwards;
-}
-
-@keyframes homeFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ====== Modern course selector panel ====== */
-
-.course-selector {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  animation: homeFadeIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.course-selector-header {
-  text-align: left;
-}
-
-.course-eyebrow {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: #9ca3af;
-  margin: 0 0 4px;
-  text-align: center;
-}
-
-.course-heading {
-  margin: 0 0 6px;
-  font-size: clamp(1.6rem, 2.3vw, 2rem);
-  font-weight: 650;
-  text-align: center;
-}
-
-.course-heading span {
-  color: var(--accent-strong);
-}
-
-.course-tagline {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #a3a7c2;
-  text-align: center;
-}
-
-/* Glass panel with scroll if many items */
-
-.course-selector-panel {
-  margin-top: 8px;
-  padding: 16px 14px;
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at top left, rgba(76, 106, 255, 0.16), transparent 60%),
-    radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.16), transparent 60%),
-    rgba(6, 10, 24, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(18px);
-  max-height: 420px;
-  overflow-y: auto;
-}
-
-.course-selector-panel::-webkit-scrollbar {
-  width: 6px;
-}
-.course-selector-panel::-webkit-scrollbar-track {
-  background: transparent;
-}
-.course-selector-panel::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5);
-  border-radius: 999px;
-}
-
-/* Sections */
-
-.course-section + .course-section {
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(71, 85, 105, 0.7);
-}
-
-.course-section-header h3 {
-  margin: 0;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--text-soft);
-}
-
-.course-section-pill {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-}
-
-/* List & rows */
-
-.course-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.course-row {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 10px 10px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  cursor: pointer;
-  transition:
-    background 0.18s ease-out,
-    transform 0.18s ease-out,
-    box-shadow 0.18s ease-out,
-    border-color 0.18s ease-out;
-  border: 1px solid transparent;
-}
-
-.course-row + .course-row {
-  margin-top: 4px;
-}
-
-.course-row:hover {
-  background: radial-gradient(
-    circle at top left,
-    rgba(76, 106, 255, 0.22),
-    transparent 68%
-  );
-  border-color: rgba(129, 140, 248, 0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.9);
-}
-
-.course-row-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.course-row-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 20% 0%, #fff, #6366f1);
-  /* background: radial-gradient(circle at 20% 0%, #a855f7, #6366f1); */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #050816;
-  box-shadow: 0 10px 22px rgba(99, 102, 241, 0.7);
-}
-
-.course-row-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.course-row-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #e5e7eb;
-}
-
-.course-row-id {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-.course-row-id code {
-  font-size: 0.7rem;
-  background: rgba(15, 23, 42, 0.95);
-  border-radius: 999px;
-  padding: 1px 8px;
-}
-
-/* Right side CTA */
-
-.course-row-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: #e5e7eb;
-  opacity: 0.8;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.course-row-arrow {
-  font-size: 1rem;
-  transform: translateX(0);
-  transition: transform 0.18s ease;
-}
-
-.course-row:hover .course-row-cta {
-  opacity: 1;
-}
-
-.course-row:hover .course-row-arrow {
-  transform: translateX(3px);
-}
-
-/* Mobile adjustments */
-
-@media (max-width: 640px) {
-  .app-root {
-    padding: 12px 10px;
-  }
-
-  .app-logo {
-    top: 10px;
-    right: 10px;
-    transform: scale(0.95);
-  }
-
-  .flashcard-wrapper {
-    padding: 18px 14px 16px;
-  }
-
-  .flashcard-controls {
-    grid-template-columns: 1fr;
-    row-gap: 10px;
-  }
-
-  .flashcard-actions {
-    justify-content: center;
-  }
-
-  .btn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .flashcard {
-    min-height: 220px;
-  }
-
-  .btn-home {
-    align-self: center;
-  }
-
-  .course-selector {
-    max-width: 100%;
-  }
-
-  .course-selector-panel {
-    max-height: 60vh;
-    padding: 12px 10px;
-  }
-
-  .course-row {
-    padding: 9px 8px;
-  }
-
-  .course-row:hover {
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
-  }
-
-  .app-shell{
-    max-width: 560px;
-  }
-
-  .app-header{
-    padding-top: 52px; /* gives the top-right logo breathing room */
-  }
-}
-
-
-/* Course section header (clickable) */
-.course-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 4px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-/* Allow normal wrapping for question text */
-.flashcard-question {
-  white-space: normal;
-}
-
-/* ===== Code Block (Single source of truth) ===== */
-
-.codeblock {
-  position: relative; /* IMPORTANT:  makes ::after anchor correctly on iOS */
-  margin-top: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.45);
-  overflow: hidden; /* rounded corners; scrolling happens in .codeblock-pre */
-  width: 100%;
-  max-width: 100%;
-}
-
-.codeblock-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.copy-btn {
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.10);
-  color: rgba(255,255,255,0.92);
-  cursor: pointer;
-}
-
-.copy-btn:hover {
-  background: rgba(255,255,255,0.16);
-}
-
-/* The ONLY horizontal scroll container */
-.codeblock-pre{
-  margin: 0;
-  padding: 14px 16px 18px;
-  white-space: pre;
-  tab-size: 2;
-  display: inline-block;
-  min-width: max-content;         /* forces horizontal overflow */
-}
-/* Force overflow when there are long lines */
-.codeblock-pre code {
-  display: inline-block;
-  white-space: pre;
-  min-width: max-content;
-}
-
-/* Scrollbar styling MUST target the scroll container */
-
-
-.codeblock-pre::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.35);
-  border-radius: 999px;
-}
-
-.codeblock-pre:hover::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.55);
-}
-
-.codeblock-pre:active::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.65);
-}
- 
-/* iOS-safe horizontal scroller */
-.codeblock-scroll{
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;            /* harmless on desktop; ignored on iOS if unsupported */
-  transform: translateZ(0);       /* helps iOS treat it as a scroll layer */
-}
-.codeblock-scroll::-webkit-scrollbar { height: 10px; }
-.codeblock-scroll::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-  border-radius: 999px;
-}
-.codeblock-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.35);
-  border-radius: 999px;
-}
-.codeblock-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.55);
-} 
-/* Ensure code samples never clip on small screens */
-.codeblock-scroll {
-  max-width: 100%;
-}
-
-.codeblock-scroll pre,
-.codeblock-scroll code {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  font-size: clamp(0.68rem, 1.8vw, 0.92rem);
-  line-height: 1.4;
-  max-width: 100%;
-}
-
-/* Use this class when you want strict no-wrap + horizontal scroll */
-.codeblock-scroll.nowrap pre,
-.codeblock-scroll.nowrap code {
-  white-space: pre;
-  word-break: normal;
-  overflow-wrap: normal;
+  color: var(--text-dim);
 }
 
 /* ================================
-   Code Answer Assessment (GUI)
-   ================================ */
-
-/* A contained scroller for long reports so the page stays usable */
-.assess-report {
-  max-height: 420px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-right: 6px;
+   GENERIC CARD (USE EVERYWHERE)
+================================ */
+.panel-card {
+  width: 100%;
+  border-radius: var(--radius);
+  padding: var(--cardPad);
+  background:
+    radial-gradient(circle at top left, rgba(124, 92, 255, 0.14), transparent 60%),
+    var(--card-bg);
+  border: 1px solid var(--border-softer);
+  box-shadow: var(--shadow);
 }
 
-.assess-row {
+/* ================================
+   HOME / MODE PICKER (CENTERED)
+================================ */
+.launcher {
+  flex: 1;
+  min-height: 0;
+
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+}
+
+.launcher-card {
+  text-align: center;
+}
+
+.launcher-title {
+  font-weight: 900;
+  font-size: clamp(0.95rem, 2.6vw, 1.05rem);
+  letter-spacing: 0.03em;
+}
+
+.launcher-subtitle {
+  margin-top: 8px;
+  font-size: clamp(0.82rem, 2.4vw, 0.95rem);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* Use a single layout consistently (grid is better on mobile) */
+.launcher-actions {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+/* ================================
+   BUTTONS
+================================ */
+.btn,
+.btn-outline,
+.btn-home {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: none;
+  background: linear-gradient(135deg, #7c5cff, #a77bff);
+  color: #050816;
+  cursor: pointer;
+
+  /* Makes buttons feel less cramped */
+  line-height: 1;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-outline {
+  width: 100%;
+  border-radius: 999px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.02);
+  color: #e7e3ff;
+  border: 1px solid rgba(231, 227, 255, 0.35);
+  cursor: pointer;
+}
+
+.btn:disabled,
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================================
+   BACK BUTTON
+================================ */
+.btn-home {
+  align-self: flex-start;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--border-soft);
+  color: rgba(255,255,255,0.92);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ================================
+   SESSION PAGE (LESS JAMMED)
+================================ */
+.flashcard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.flashcard-question {
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0 0 8px 0;
+}
+
+/* ================================
+   AI / TYPED ANSWER
+================================ */
+.typed-question {
+  font-weight: 900;
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+  line-height: 1.35;
+}
+
+.typed-answer-box {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.assess-badges {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
+.typed-answer-input {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.92);
+  resize: vertical;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  outline: none;
+}
+
+.typed-answer-input:focus {
+  border-color: rgba(167, 123, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(167, 123, 255, 0.18);
+}
+
+.typed-answer-actions {
+  display: flex;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.assess-badge {
-  font-size: 0.72rem;
+.typed-answer-actions > * {
+  flex: 1 1 140px; /* prevents buttons from squishing */
+}
+
+/* ================================
+   FEEDBACK / REPORT
+================================ */
+.assess-report {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-item {
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.report-item-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.report-item-message {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #cbd5f5;
+}
+
+/* ================================
+   MODAL (COURSE PICKER) - SCROLL SAFE
+================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(11,16,32,0.96);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: var(--shadow);
+
+  /* Critical for small screens */
+  max-height: min(80vh, 720px);
+  overflow: auto;
+}
+
+/* ================================
+   SMALL MOBILE TIGHTENING
+================================ */
+@media (max-width: 420px) {
+  :root {
+    --pad: 14px;
+    --cardPad: 12px;
+  }
+
+  .launcher-actions {
+    gap: 9px;
+  }
+
+  .btn,
+  .btn-outline {
+    padding: 12px 14px;
+  }
+}
+/* ================================
+   QA CARD (TypedAnswerCard)
+================================ */
+.qa-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qa-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qa-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qa-kicker {
+  font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 4px 10px;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.qa-progress {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.72);
+}
+
+.qa-link {
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: rgba(231,227,255,0.92);
+  border: 1px solid rgba(231,227,255,0.22);
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(15, 23, 42, 0.65);
-  color: rgba(255,255,255,0.85);
   white-space: nowrap;
 }
 
-.assess-badge-required {
-  border-color: rgba(255, 218, 123, 0.45);
-  background: rgba(255, 218, 123, 0.12);
-  color: rgba(255, 235, 251, 0.95);
+.qa-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
 }
 
-.assess-badge-optional {
-  border-color: rgba(61, 217, 255, 0.35);
-  background: rgba(61, 217, 255, 0.10);
-  color: rgba(231, 227, 255, 0.95);
+.qa-question-text {
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.35;
+  white-space: pre-wrap;
 }
 
-.assess-badge-forbidden {
-  border-color: rgba(255, 107, 203, 0.35);
-  background: rgba(255, 107, 203, 0.10);
-  color: rgba(255, 235, 251, 0.95);
+.qa-actions {
+  margin-top: 10px;
 }
 
-.assess-score-pill {
+.qa-error {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #ff6bcb;
+  opacity: 0.95;
+}
+
+/* Results header */
+.qa-results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.qa-results-title {
+  font-weight: 900;
+}
+
+.qa-results-count {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.85;
+}
+
+/* Result card */
+.qa-result {
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.qa-result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qa-result-model {
+  font-weight: 900;
+}
+
+.qa-result-pill {
   font-size: 0.78rem;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.9;
 }
 
-/* Code Editor with syntax-highlight overlay (textarea on top) */
-.code-editor {
-  position: relative;
-  width: 100%;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0,0,0,0.35);
-  overflow: hidden;
-}
-
-.code-editor-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-  background: rgba(15, 23, 42, 0.35);
-}
-
-.code-editor-toolbar-left {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.code-editor-toolbar-right {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.code-editor-link {
-  font-size: 0.85rem;
-  font-weight: 650;
-  color: #ffda7b;
-  text-decoration: none;
-  border-bottom: 1px dashed rgba(255, 218, 123, 0.45);
-  padding-bottom: 1px;
-}
-
-.code-editor-link:hover {
-  color: #ffe8b3;
-  border-bottom-color: rgba(255, 232, 179, 0.65);
-}
-
-.code-editor-surface {
-  position: relative;
-  min-height: 280px;
-  max-height: 420px;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.code-editor-highlight {
-  margin: 0;
-  padding: 14px 16px;
-  min-height: 280px;
-  white-space: pre;
-  tab-size: 2;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.code-editor-textarea {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 14px 16px;
-  border: 0;
-  outline: none;
-  background: transparent;
-
-  /* Hide raw text but keep caret visible */
-  color: transparent;
-  caret-color: #ffffff;
-
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-
-  resize: none;
-  white-space: pre;
-  tab-size: 2;
-}
-
-/* A subtle helper text style */
-.assess-help {
-  font-size: 0.84rem;
-  color: var(--text-soft);
-  line-height: 1.5;
-}
-
-/* Keep your existing codeblock wrapping behavior for question display, but DO NOT kill scrolling */
-.codeblock-scroll {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-/* -----------------------
-   Modal (Fancy Popup)
------------------------- */
-.modal-overlay{
-  position:fixed; inset:0;
-  background: rgba(0,0,0,.62);
-  display:flex; align-items:center; justify-content:center;
-  padding: 18px;
-  z-index: 9999;
-  backdrop-filter: blur(10px);
-}
-.modal-card{
-  width:min(760px, 96vw);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(12,14,18,.92);
-  box-shadow: 0 20px 60px rgba(0,0,0,.45);
-  overflow:hidden;
-}
-.modal-head{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  padding: 16px 16px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.modal-title{
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: .2px;
-}
-.modal-subtitle{
-  margin-top: 4px;
-  font-size: 12px;
-  opacity: .82;
-}
-.modal-close{
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: #fff;
-  border-radius: 12px;
-  padding: 8px 10px;
-  cursor:pointer;
-}
-.modal-body{
-  padding: 14px 16px;
-}
-.modal-empty{
-  padding: 18px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
-  opacity: .88;
-}
-.modal-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-.modal-course{
-  text-align:left;
-  border-radius: 14px;
-  padding: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
-  color:#fff;
-  cursor:pointer;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-.modal-course:hover{
-  transform: translateY(-1px);
-  background: rgba(255,255,255,.09);
-  border-color: rgba(255,255,255,.16);
-}
-.modal-course-title{
-  font-weight: 700;
-  font-size: 14px;
-}
-.modal-course-meta{
-  margin-top: 4px;
-  font-size: 12px;
-  opacity: .78;
-}
-.modal-foot{
-  padding: 12px 16px 16px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  display:flex; justify-content:flex-end;
-}
-
-/* -----------------------
-   Code blocks inside flashcards
------------------------- */
-.codeblock-scroll{
-  margin-top: 10px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.35);
-  overflow: hidden;
-}
-.code-autofit{
-  margin: 0;
-  padding: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-/* -----------------------
-   Live Code editor
------------------------- */
-.code-editor{
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.30);
-  overflow:hidden;
-}
-.code-editor-toolbar{
-  display:flex; justify-content:space-between; align-items:center;
-  padding: 10px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-.code-editor-surface{
-  position: relative;
-  min-height: 240px;
-  max-height: 360px;
-  overflow: hidden;
-}
-.code-editor-highlight{
-  position:absolute; inset:0;
-  margin:0;
-  padding: 12px;
-  overflow:auto;
-  pointer-events:none;
-  white-space: pre;
-}
-.code-editor-textarea{
-  position:absolute; inset:0;
-  margin:0;
-  padding: 12px;
-  width:100%;
-  height:100%;
-  border:none;
-  resize:none;
-  background: transparent;
-  color: transparent;              /* hides raw text */
-  caret-color: #ffffff;            /* shows caret */
-  outline:none;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
-  line-height: 1.55;
-  overflow:auto;
-}
-
-/* report styles */
-.report-panel{
+.qa-result-msg {
   margin-top: 8px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  opacity: 0.92;
 }
-.assess-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
+
+.qa-result-hint {
+  margin-top: 8px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  opacity: 0.85;
 }
-.assess-badges{
-  display:flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content:flex-end;
-}
-.assess-badge{
-  font-size: 11px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  opacity: .92;
-}
-.assess-score-pill{
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.25);
-}
-.assess-report{
+
+/* tone accents */
+.qa-awesome { background: rgba(80,255,140,.08); border-color: rgba(80,255,140,.22); }
+.qa-high    { background: rgba(255,218,123,.08); border-color: rgba(255,218,123,.22); }
+.qa-medium  { background: rgba(61,217,255,.08); border-color: rgba(61,217,255,.22); }
+.qa-low     { background: rgba(255,80,80,.08);  border-color: rgba(255,80,80,.22); }
+
+.qa-results-foot {
   margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-.report-item{
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
+  font-size: 0.85rem;
+  opacity: 0.85;
+  line-height: 1.4;
 }

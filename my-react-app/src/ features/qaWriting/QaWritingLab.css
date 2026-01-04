@@ -1,0 +1,318 @@
+/* src/features/qaWriting/QaWritingLab.css */
+
+.qa-wrap {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.qa-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.qa-titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qa-title {
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+}
+
+.qa-subtitle {
+  font-size: 14px;
+  opacity: 0.78;
+  line-height: 1.4;
+}
+
+.qa-progress {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.qa-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.qa-card--results {
+  margin-top: 14px;
+}
+
+.qa-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qa-row--space {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qa-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.qa-muted {
+  opacity: 0.75;
+}
+
+.qa-chipRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.qa-chip {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 0.92;
+}
+
+.qa-question {
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.qa-field {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qa-textarea {
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.5;
+}
+
+.qa-textarea:focus {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+}
+
+.qa-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.qa-actionsSpacer {
+  flex: 1;
+}
+
+.qa-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 0.06s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.qa-btn:active {
+  transform: translateY(1px);
+}
+
+.qa-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.qa-btn--primary {
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(0, 0, 0, 0.92);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+.qa-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.qa-btn--link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+}
+
+.qa-alert {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.qa-alert--danger {
+  border-color: rgba(255, 80, 80, 0.35);
+  background: rgba(255, 80, 80, 0.10);
+  color: rgba(255, 220, 220, 0.95);
+}
+
+.qa-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.qa-panelTitle {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.78;
+  margin-bottom: 8px;
+}
+
+.qa-panelBody {
+  line-height: 1.55;
+  opacity: 0.92;
+}
+
+.qa-breakdown {
+  margin-top: 12px;
+}
+
+.qa-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.qa-item {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.20);
+}
+
+.qa-itemTop {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.qa-itemTitle {
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
+
+.qa-itemMsg {
+  margin-top: 8px;
+  opacity: 0.92;
+  line-height: 1.45;
+}
+
+.qa-pill {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.qa-pill--success {
+  border-color: rgba(80, 255, 140, 0.35);
+  background: rgba(80, 255, 140, 0.10);
+}
+
+.qa-pill--warn {
+  border-color: rgba(255, 218, 123, 0.35);
+  background: rgba(255, 218, 123, 0.10);
+}
+
+.qa-pill--danger {
+  border-color: rgba(255, 80, 80, 0.35);
+  background: rgba(255, 80, 80, 0.10);
+}
+
+.qa-divider {
+  margin-top: 14px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.qa-learn {
+  margin-top: 14px;
+}
+
+.qa-debug {
+  margin-top: 14px;
+  opacity: 0.9;
+}
+
+.qa-debug summary {
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.qa-debug pre {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.30);
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Tablet+ */
+@media (min-width: 860px) {
+  .qa-wrap {
+    padding: 22px;
+  }
+
+  .qa-title {
+    font-size: 24px;
+  }
+
+  .qa-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
